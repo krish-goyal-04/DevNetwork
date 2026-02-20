@@ -6,11 +6,11 @@ const app = express();
 
 app.post("/signup", async (req, res) => {
   const dummyObj = {
-    firstName: "Krish",
+    firstName: "harishhh",
     lastName: "Goyal",
     gender: "Male",
     age: 22,
-    emailId: "Krish@123",
+    emailId: "harish@123",
   };
 
   try {
