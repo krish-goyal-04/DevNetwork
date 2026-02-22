@@ -2,6 +2,8 @@ const express = require("express");
 
 const { connectDB } = require("./config/database");
 const { User } = require("./models/user");
+const { validateSignupUser, validateLoginUSer } = require("./utils/validate");
+const bcrypt = require("bcrypt");
 
 const app = express();
 
@@ -11,18 +13,49 @@ app.use(express.json());
 
 //API to create a new user
 app.post("/signup", async (req, res) => {
-  //sending dynamic data for signup
   try {
-    const doesUserExists = await User.exists({ emailId: req.body.emailId });
-    if (doesUserExists != null) {
-      res.send("User already exists!");
-      return;
-    }
-    const newUser = new User(req.body);
+    const { firstName, lastName, emailId, password, gender } = req.body;
+
+    //validation (Putting these validations on seperate function to keep code clean)
+    await validateSignupUser(req);
+
+    //password encryption
+    const encryptedPassword = await bcrypt.hash(password, 10);
+
+    //Saving user to database
+    const newUser = new User({
+      firstName,
+      lastName,
+      emailId,
+      gender,
+      password: encryptedPassword,
+    });
     await newUser.save();
     res.send("User Successfully added!");
   } catch (err) {
     res.status(400).send(err.message);
+  }
+});
+
+app.post("/login", async (req, res) => {
+  console.log(req.body);
+  const { emailId, password } = req.body;
+  try {
+    //Validating email
+    await validateLoginUSer(req);
+    const findUser = await User.findOne({ emailId: emailId });
+    if (!findUser) throw new Error("Invalid credentials");
+
+    //once password is edncrypted and stored in db, we can never decrypt it.
+    //bcrypt library provides a compare method, where we put the user entered password along with the hashed stored password, which then tells us wether the password is correct or not.
+
+    const checkPassword = await bcrypt.compare(password, findUser.password);
+    if (!checkPassword) throw new Error("Invalid credentials");
+    res.send("Logged in Successfully!!");
+  } catch (err) {
+    res
+      .status(400)
+      .send("Unable to login, please try again" + "ERROR :" + err.message);
   }
 });
 

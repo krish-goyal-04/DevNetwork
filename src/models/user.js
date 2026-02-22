@@ -12,7 +12,7 @@ const userSchema = new Schema(
       maxLength: 25,
       trim: true,
       validate(value) {
-        if (!validator.isAlpha(value))
+        if (!validator.isAlpha(value.replace(/\s/g, "")))
           throw new Error(
             "Numbers and Special characters are not allowed in first name!",
           );
@@ -24,7 +24,7 @@ const userSchema = new Schema(
       maxLength: 25,
       trim: true,
       validate(value) {
-        if (!validator.isAlpha(value))
+        if (!validator.isAlpha(value.replace(/\s/g, "")))
           throw new Error(
             "Numbers and Special characters are not allowed in last name!",
           );
@@ -35,27 +35,33 @@ const userSchema = new Schema(
       required: true,
       trim: true,
       lowercase: true,
+      unique: true,
       validate(value) {
         if (!validator.isEmail(value))
           throw new Error("Not a valid email, Please enter calid email ID!");
       },
     },
-    password: String,
+    password: {
+      type: String,
+      require: true,
+      trim: true,
+    },
     age: {
       type: Number,
       min: 15,
       max: 50,
       validate(value) {
-        if (validator.isFloat(value)) throw new Error("Enter a valid age!");
+        if (!Number.isInteger(value)) throw new Error("Enter a valid age!");
       },
     },
     gender: {
       type: String,
       trim: true,
       required: true,
+      lowercase: true,
       validate: {
         validator: function (value) {
-          return ["Male", "Female", "Others"].includes(value);
+          return ["male", "female", "others"].includes(value);
         },
         message: (props) =>
           `${props.value} is not a valid gender, provide a valid gender!`,
@@ -81,6 +87,7 @@ const userSchema = new Schema(
         lowercase: true,
         trim: true,
         //need to handle multiple same entries
+        //production level approach - use presave hook
       },
     ],
     city: {
@@ -90,7 +97,7 @@ const userSchema = new Schema(
       maxLength: 25,
       minLength: 3,
       validate(value) {
-        if (!validator.isAlpha(value))
+        if (!validator.isAlpha(value.replace(/\s/g, "")))
           throw new Error(
             "Numbers and Special characters are not allowed in city name!",
           );
@@ -103,7 +110,7 @@ const userSchema = new Schema(
       maxLength: 25,
       minLength: 3,
       validate(value) {
-        if (!validator.isAlpha(value))
+        if (!validator.isAlpha(value.replace(/\s/g, "")))
           throw new Error(
             "Numbers and Special characters are not allowed in state name!",
           );
