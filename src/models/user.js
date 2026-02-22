@@ -52,6 +52,35 @@ const userSchema = new Schema(
       default:
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqehdPiDwe_KT7gCB64TEtpRKrKvDEJxp06Q&s",
     },
+    skills: [
+      {
+        type: String,
+        lowercase: true,
+        trim: true,
+        //need to handle multiple same entries
+      },
+    ],
+    city: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      maxLength: 25,
+      minLength: 3,
+    },
+    state: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      maxLength: 25,
+      minLength: 3,
+    },
+    college: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      maxLength: 25,
+      minLength: 3,
+    },
   },
   {
     timestamps: true,

@@ -49,11 +49,42 @@ app.get("/feed", async (req, res) => {
 });
 
 //API to find user by id and update(PATCH)
-app.patch("/user", async (req, res) => {
-  const userId = req.body.userId;
+app.patch("/user/:userId", async (req, res) => {
+  const userId = req.params?.userId;
   const data = req.body;
+
   try {
+    //We cant allow the user to update some sensitive profile related information like email(once created, it should stay always),user id,etc.
+    //So we create a Allowed updates string array to only allow those fields to be updated which doesnot affect the account relevance.
+    //then we check out(using every()) all those unwanted/unsecured(in term of user account management) update requests(userid,email id,etc) from request body. If even any one exists, the request will fail.
+
+    //The every() method in JavaScript is an array method that tests whether all elements in an array satisfy a specific condition provided by a callback function.
+
+    const Allowed_Updates = [
+      "firstName",
+      "lastName",
+      "description",
+      "photoUrl",
+      "skills",
+    ];
+
+    const isUpdateAllowed = Object.keys(data).every((k) =>
+      Allowed_Updates.includes(k),
+    );
+
+    console.log(isUpdateAllowed);
+
+    if (!isUpdateAllowed) {
+      throw new Error("Requested update is not allowed!");
+    }
+
+    if (data.skills.length > 15) {
+      throw new Error("Skills cant exceed 15 limit!!");
+    }
     await User.findByIdAndUpdate(userId, data, { runValidators: true });
+
+    //these {runValidators:true}, so that when data is modified, all the initial validators like lowecase, min,minLength,etc run respectively.
+
     res.send("Data updated successfully!");
   } catch (err) {
     res.status(400).send("Failed to update data!" + err.message);
