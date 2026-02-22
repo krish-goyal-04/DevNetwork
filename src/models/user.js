@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const validator = require("validator"); //Using this validator npm lirary to check and sanitize data before pushing into database.
 
 const { Schema } = mongoose;
 
@@ -10,25 +11,43 @@ const userSchema = new Schema(
       minLength: 3,
       maxLength: 25,
       trim: true,
+      validate(value) {
+        if (!validator.isAlpha(value))
+          throw new Error(
+            "Numbers and Special characters are not allowed in first name!",
+          );
+      },
     },
     lastName: {
       type: String,
       minLength: 3,
       maxLength: 25,
       trim: true,
+      validate(value) {
+        if (!validator.isAlpha(value))
+          throw new Error(
+            "Numbers and Special characters are not allowed in last name!",
+          );
+      },
     },
     emailId: {
       type: String,
       required: true,
       trim: true,
       lowercase: true,
-      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Please enter valid email id!"],
+      validate(value) {
+        if (!validator.isEmail(value))
+          throw new Error("Not a valid email, Please enter calid email ID!");
+      },
     },
     password: String,
     age: {
       type: Number,
       min: 15,
       max: 50,
+      validate(value) {
+        if (validator.isFloat(value)) throw new Error("Enter a valid age!");
+      },
     },
     gender: {
       type: String,
@@ -51,6 +70,10 @@ const userSchema = new Schema(
       type: String,
       default:
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqehdPiDwe_KT7gCB64TEtpRKrKvDEJxp06Q&s",
+      validate(value) {
+        if (!validator.isURL(value))
+          throw new Error("Enter a vailid photo URL!!");
+      },
     },
     skills: [
       {
@@ -66,6 +89,12 @@ const userSchema = new Schema(
       lowercase: true,
       maxLength: 25,
       minLength: 3,
+      validate(value) {
+        if (!validator.isAlpha(value))
+          throw new Error(
+            "Numbers and Special characters are not allowed in city name!",
+          );
+      },
     },
     state: {
       type: String,
@@ -73,6 +102,12 @@ const userSchema = new Schema(
       lowercase: true,
       maxLength: 25,
       minLength: 3,
+      validate(value) {
+        if (!validator.isAlpha(value))
+          throw new Error(
+            "Numbers and Special characters are not allowed in state name!",
+          );
+      },
     },
     college: {
       type: String,
@@ -90,3 +125,5 @@ const userSchema = new Schema(
 const User = mongoose.model("User", userSchema);
 
 module.exports = { User };
+
+//Have used two different methods to writ validations, both works fine and message is printed.

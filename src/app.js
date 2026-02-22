@@ -7,6 +7,8 @@ const app = express();
 
 app.use(express.json());
 
+//NEVER TRUST USER ENTERED DATA, ALWAYS PERFORM MULTIPLE POSSIBLE CHECKS!!!!!!!!
+
 //API to create a new user
 app.post("/signup", async (req, res) => {
   //sending dynamic data for signup
@@ -78,7 +80,7 @@ app.patch("/user/:userId", async (req, res) => {
       throw new Error("Requested update is not allowed!");
     }
 
-    if (data.skills.length > 15) {
+    if (data?.skills && data.skills.length > 15) {
       throw new Error("Skills cant exceed 15 limit!!");
     }
     await User.findByIdAndUpdate(userId, data, { runValidators: true });
