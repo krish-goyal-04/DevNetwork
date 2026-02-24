@@ -4,10 +4,14 @@ const { connectDB } = require("./config/database");
 const { User } = require("./models/user");
 const { validateSignupUser, validateLoginUSer } = require("./utils/validate");
 const bcrypt = require("bcrypt");
+const cookie = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
 
 const app = express();
-
+dotenv.config();
 app.use(express.json());
+app.use(cookie());
 
 //NEVER TRUST USER ENTERED DATA, ALWAYS PERFORM MULTIPLE POSSIBLE CHECKS!!!!!!!!
 
@@ -51,12 +55,31 @@ app.post("/login", async (req, res) => {
 
     const checkPassword = await bcrypt.compare(password, findUser.password);
     if (!checkPassword) throw new Error("Invalid credentials");
+
+    //If user is verified, then we create a jwt token using jsonwebtoken npm library
+    //we send userId as token, so that when user access other pages, then cookie stores user id and doesnot show other persons page or doesnot ask again to login
+
+    const token = jwt.sign({ _id: findUser._id }, process.env.JWT_Private_Key);
+    console.log(token);
+
+    //Once the token in built, we send this token as a cookie
+
+    res.cookie("token", token);
     res.send("Logged in Successfully!!");
   } catch (err) {
     res
       .status(400)
       .send("Unable to login, please try again" + "ERROR :" + err.message);
   }
+});
+
+app.get("/profile", (req, res) => {
+  const { token } = req.cookies;
+  const user = jwt.verify(token, process.env.JWT_Private_Key);
+  if (!user) res.status(400).send("User not found");
+  console.log(user._id);
+
+  res.send("Cookie sent");
 });
 
 //API to get a unique user details usin email id
