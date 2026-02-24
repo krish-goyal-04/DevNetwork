@@ -7,6 +7,7 @@ const bcrypt = require("bcrypt");
 const cookie = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
+const { userAuth } = require("./middlewares/auth");
 
 const app = express();
 dotenv.config();
@@ -50,16 +51,11 @@ app.post("/login", async (req, res) => {
     const findUser = await User.findOne({ emailId: emailId });
     if (!findUser) throw new Error("Invalid credentials");
 
-    //once password is edncrypted and stored in db, we can never decrypt it.
-    //bcrypt library provides a compare method, where we put the user entered password along with the hashed stored password, which then tells us wether the password is correct or not.
-
-    const checkPassword = await bcrypt.compare(password, findUser.password);
+    const checkPassword = await findUser.validatePassword(password);
     if (!checkPassword) throw new Error("Invalid credentials");
 
-    //If user is verified, then we create a jwt token using jsonwebtoken npm library
-    //we send userId as token, so that when user access other pages, then cookie stores user id and doesnot show other persons page or doesnot ask again to login
-
-    const token = jwt.sign({ _id: findUser._id }, process.env.JWT_Private_Key);
+    const token = await findUser.getJWT();
+    //here we put finduser, as finduser here is the instance of the userSchema
     console.log(token);
 
     //Once the token in built, we send this token as a cookie
@@ -73,13 +69,9 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/profile", (req, res) => {
-  const { token } = req.cookies;
-  const user = jwt.verify(token, process.env.JWT_Private_Key);
-  if (!user) res.status(400).send("User not found");
-  console.log(user._id);
-
-  res.send("Cookie sent");
+app.get("/profile", userAuth, async (req, res) => {
+  const { user } = req;
+  res.send("Cookie sent" + user);
 });
 
 //API to get a unique user details usin email id

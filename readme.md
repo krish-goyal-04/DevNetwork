@@ -25,3 +25,17 @@ jwt.sign(payload, secretOrPrivateKey)
 the secret or private key is a must and it should only be known to th serer.we can any string as this key
 
 Never share cookis with anyone
+
+we can also add middleware like this
+one way is app.use("/",(req,res,next)=>{})
+the other one is, actually here the middlewareFunction will be applied like above only
+app.get("/",middlewareFuncttion,(req,res)=>{})
+
+while using middlewares like userAuth for checking user's login status,
+we set user as req.user = user
+and, which accessing it in HTTP method, we access it as req.user and not req.body.user
+
+req.body is used only for those purposes where the data is sent by client, here in this case the data isnot sent by client, rather its sent by the midleware so req.user
+
+The syntax of schema function is schemaName.methods.methodName
+schema methods are always normal functions and not arrow functions
