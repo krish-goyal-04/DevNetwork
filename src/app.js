@@ -9,6 +9,9 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const { userAuth } = require("./middlewares/auth");
 
+const authRouter = require("./routes/auth");
+const profileRouter = require("./routes/profile");
+
 const app = express();
 dotenv.config();
 app.use(express.json());
@@ -16,63 +19,9 @@ app.use(cookie());
 
 //NEVER TRUST USER ENTERED DATA, ALWAYS PERFORM MULTIPLE POSSIBLE CHECKS!!!!!!!!
 
-//API to create a new user
-app.post("/signup", async (req, res) => {
-  try {
-    const { firstName, lastName, emailId, password, gender } = req.body;
-
-    //validation (Putting these validations on seperate function to keep code clean)
-    await validateSignupUser(req);
-
-    //password encryption
-    const encryptedPassword = await bcrypt.hash(password, 10);
-
-    //Saving user to database
-    const newUser = new User({
-      firstName,
-      lastName,
-      emailId,
-      gender,
-      password: encryptedPassword,
-    });
-    await newUser.save();
-    res.send("User Successfully added!");
-  } catch (err) {
-    res.status(400).send(err.message);
-  }
-});
-
-app.post("/login", async (req, res) => {
-  console.log(req.body);
-  const { emailId, password } = req.body;
-  try {
-    //Validating email
-    await validateLoginUSer(req);
-    const findUser = await User.findOne({ emailId: emailId });
-    if (!findUser) throw new Error("Invalid credentials");
-
-    const checkPassword = await findUser.validatePassword(password);
-    if (!checkPassword) throw new Error("Invalid credentials");
-
-    const token = await findUser.getJWT();
-    //here we put finduser, as finduser here is the instance of the userSchema
-    console.log(token);
-
-    //Once the token in built, we send this token as a cookie
-
-    res.cookie("token", token);
-    res.send("Logged in Successfully!!");
-  } catch (err) {
-    res
-      .status(400)
-      .send("Unable to login, please try again" + "ERROR :" + err.message);
-  }
-});
-
-app.get("/profile", userAuth, async (req, res) => {
-  const { user } = req;
-  res.send("Cookie sent" + user);
-});
+//any req that comes will match with the routes defined in authrouter,profilerouter,etc...if it matched,,it gets executed
+app.use("/", authRouter);
+app.use("/", profileRouter);
 
 //API to get a unique user details usin email id
 app.get("/user", async (req, res) => {

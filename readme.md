@@ -39,3 +39,46 @@ req.body is used only for those purposes where the data is sent by client, here 
 
 The syntax of schema function is schemaName.methods.methodName
 schema methods are always normal functions and not arrow functions
+
+cookies workflow
+
+User Logs In
+↓
+Server → Set-Cookie header
+↓
+Browser stores cookie
+↓
+User requests /profile
+↓
+Browser sends Cookie header automatically
+↓
+Express receives request
+↓
+cookie-parser reads req.headers.cookie
+↓
+cookie-parser sets req.cookies object
+↓
+userAuth middleware reads req.cookies.token
+↓
+JWT verify
+↓
+Access granted
+
+why cookie parser isnot required in userAuth
+because we use app.use(cookieparser())as a middleware
+What cookie-parser actually does
+
+When this runs:
+
+app.use(cookieParser());
+
+It internally does something like:
+
+req.cookies = parsedCookiesObject;
+next();
+
+So now req contains:
+
+req.cookies = {
+token: "abc123"
+}
