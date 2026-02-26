@@ -75,6 +75,7 @@ const userSchema = new Schema(
       type: String,
       default: "Hello, I enjoy using DevNetwork!!",
       trim: true,
+      maxLength: 150,
     },
     photoUrl: {
       type: String,

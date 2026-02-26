@@ -33,4 +33,33 @@ const validateLoginUSer = async (req, res) => {
   }
 };
 
-module.exports = { validateSignupUser, validateLoginUSer };
+const validateProfileEditData = async (req, res) => {
+  try {
+    const allowedUpdates = [
+      "firstName",
+      "lastName",
+      "age",
+      "gender",
+      "description",
+      "photoUrl",
+      "skills",
+      "city",
+      "state",
+      "college",
+    ];
+    const isUpdateAllowed = Object.keys(req.body).every((k) =>
+      allowedUpdates.includes(k),
+    );
+
+    if (!isUpdateAllowed)
+      throw new Error("Invalid update requested, please try again!!!");
+  } catch (err) {
+    res.send("ERROR : " + err.message);
+  }
+};
+
+module.exports = {
+  validateSignupUser,
+  validateLoginUSer,
+  validateProfileEditData,
+};

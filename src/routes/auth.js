@@ -32,6 +32,7 @@ authRouter.post("/signup", async (req, res) => {
   }
 });
 
+//POST api fo login
 authRouter.post("/login", async (req, res) => {
   try {
     //Validating email
@@ -55,6 +56,15 @@ authRouter.post("/login", async (req, res) => {
     res
       .status(400)
       .send("Unable to login, please try again /n" + "ERROR :" + err.message);
+  }
+});
+
+authRouter.post("/logout", userAuth, async (req, res) => {
+  try {
+    res.clearCookie("token");
+    res.send("Cookie deleted");
+  } catch (err) {
+    res.send("ERROR : " + err.message);
   }
 });
 

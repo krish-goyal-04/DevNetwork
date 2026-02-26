@@ -5,7 +5,7 @@ POST /logout
 
 profileRouter
 GET /profile/view - get profile of user
-GET /profile/edit - edit profile details other than email, user id and password(separate for password)
+PATCH /profile/edit - edit profile details other than email, user id and password(separate for password)
 PATCH /profile/password - edit profile password
 
 POST /request/send/interested/:userId
