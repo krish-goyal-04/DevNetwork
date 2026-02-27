@@ -11,6 +11,7 @@ const { userAuth } = require("./middlewares/auth");
 
 const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
+const requestRouter = require("./routes/request");
 
 const app = express();
 dotenv.config();
@@ -22,6 +23,7 @@ app.use(cookie());
 //any req that comes will match with the routes defined in authrouter,profilerouter,etc...if it matched,,it gets executed
 app.use("/", authRouter);
 app.use("/", profileRouter);
+app.use("/", requestRouter);
 
 //API to get a unique user details usin email id
 app.get("/user", async (req, res) => {
