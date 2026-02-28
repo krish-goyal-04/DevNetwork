@@ -82,3 +82,10 @@ So now req contains:
 req.cookies = {
 token: "abc123"
 }
+
+have done unique:true in Users (which stores users data indivisually) just for email id, so the mongodb automatically
+created a index using email ids, which improves query performance when database grows.
+indexing is very important to improve query performance for large databases as, in large dbs, querrying becomes very slow
+nd when a fieild which is unique helps in faster querrying.
+we can even set firstname as index:true, so if in db there are 50 virat and we need to find one then finding indexing will help in finding the one virat out of 50 virats, and not between thousands and lakhs of users.
+keep unique:true for indexed which are always unique like email ids, mobile nos.
