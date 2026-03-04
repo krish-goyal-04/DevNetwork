@@ -2,6 +2,7 @@ const { userAuth } = require("../middlewares/auth");
 const express = require("express");
 const { validateProfileEditData } = require("../utils/validate");
 const bcrypt = require("bcrypt");
+const validator = require("validator");
 
 const profileRouter = express.Router();
 
@@ -43,6 +44,9 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
 profileRouter.patch("/profile/password", userAuth, async (req, res) => {
   try {
     if (!req.body.password) throw new Error("Invalid request!");
+
+    if (!validator.isStrongPassword(req.body.password))
+      throw new Error("Enter a strong password!!!");
     const user = req.user;
 
     const isMatch = await bcrypt.compare(req.body.password, user.password);

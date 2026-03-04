@@ -104,6 +104,9 @@ toUserId: user.\_id,
 status: "interested",
 }).populate('fromUserId',["firstName","lastName"]);
 
+.save() mehtod automatically runs all validators defined in schema or somewhere else when data is being added or updated.
+but the encrypted password is not running because the save() is checking the encrypted password strength and not the original plain text, so we need to check passowrd strength before data ios saved in db.
+
 ### Doubt
 
 if a and b both have sent req to c, and hile a is logged in, b intercepts a post req to see req sent, then b can get data of a , if b has user id of a
