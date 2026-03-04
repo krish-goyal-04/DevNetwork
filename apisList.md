@@ -17,7 +17,7 @@ POST /request/review/accepted/:requestId
 POST /request/review/rejected/:requestId
 
 GET /connections
-GET /requests/received
+GET /user/requests/received
 GET /feed - main api, which gives profile of other users
 
 status - igno0red,rejected,accepted,interested

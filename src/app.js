@@ -12,6 +12,7 @@ const { userAuth } = require("./middlewares/auth");
 const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/request");
+const userRouter = require("./routes/user");
 
 const app = express();
 dotenv.config();
@@ -24,6 +25,7 @@ app.use(cookie());
 app.use("/", authRouter);
 app.use("/", profileRouter);
 app.use("/", requestRouter);
+app.use("/", userRouter);
 
 //API to get a unique user details usin email id
 app.get("/user", async (req, res) => {
@@ -50,16 +52,11 @@ app.get("/feed", async (req, res) => {
 });
 
 //API to find user by id and update(PATCH)
-app.patch("/user/:userId", async (req, res) => {
+/*app.patch("/user/:userId", async (req, res) => {
   const userId = req.params?.userId;
   const data = req.body;
 
   try {
-    //We cant allow the user to update some sensitive profile related information like email(once created, it should stay always),user id,etc.
-    //So we create a Allowed updates string array to only allow those fields to be updated which doesnot affect the account relevance.
-    //then we check out(using every()) all those unwanted/unsecured(in term of user account management) update requests(userid,email id,etc) from request body. If even any one exists, the request will fail.
-
-    //The every() method in JavaScript is an array method that tests whether all elements in an array satisfy a specific condition provided by a callback function.
 
     const Allowed_Updates = [
       "firstName",
@@ -90,18 +87,7 @@ app.patch("/user/:userId", async (req, res) => {
   } catch (err) {
     res.status(400).send("Failed to update data!" + err.message);
   }
-});
-
-//API to delete a user by user id
-app.delete("/user", async (req, res) => {
-  const userId = req.body.userId;
-  try {
-    await User.findByIdAndDelete(userId);
-    res.send("User deleted Successfully!");
-  } catch (err) {
-    res.status(400).send("Encontered an error in deleting the user!");
-  }
-});
+});*/
 
 connectDB()
   .then(() => {

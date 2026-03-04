@@ -6,6 +6,7 @@ const connectionRequestSchema = new Schema(
     fromUserId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
+      ref: "User",
     },
     toUserId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -25,11 +26,10 @@ const connectionRequestSchema = new Schema(
 
 //Check if user is not trying to send interested/ignored to self
 //it runs as a middleware, before the data is saved in db
-connectionRequestSchema.pre("save", async function (next) {
+connectionRequestSchema.pre("save", function () {
   const fromUserId = this.fromUserId;
   if (fromUserId.equals(this.toUserId))
     throw new Error("Cant send request to self!!!");
-  next();
 });
 
 const ConnectionRequest = mongoose.model(

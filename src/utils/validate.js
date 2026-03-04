@@ -34,6 +34,11 @@ const validateLoginUSer = async (req, res) => {
 };
 
 const validateProfileEditData = async (req, res) => {
+  //We cant allow the user to update some sensitive profile related information like email(once created, it should stay always),user id,etc.
+  //So we create a Allowed updates string array to only allow those fields to be updated which doesnot affect the account relevance.
+  //then we check out(using every()) all those unwanted/unsecured(in term of user account management) update requests(userid,email id,etc) from request body. If even any one exists, the request will fail.
+
+  //The every() method in JavaScript is an array method that tests whether all elements in an array satisfy a specific condition provided by a callback function.
   try {
     const allowedUpdates = [
       "firstName",

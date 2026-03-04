@@ -89,3 +89,21 @@ indexing is very important to improve query performance for large databases as, 
 nd when a fieild which is unique helps in faster querrying.
 we can even set firstname as index:true, so if in db there are 50 virat and we need to find one then finding indexing will help in finding the one virat out of 50 virats, and not between thousands and lakhs of users.
 keep unique:true for indexed which are always unique like email ids, mobile nos.
+
+populate and ref
+
+ref is used to reference one or more enitities in one schema from other schemas.
+
+The populate() method in Mongoose automatically replaces a referenced field (ObjectId) with the actual document from another collection. It makes working with related data easier by fetching linked documents in a single query, eliminating the need to manually query multiple collections.
+
+while using reference (ref), we write name of refrenced model not schema name.ex: 'User' and not userSchema
+
+while using populating, we write te entity namw as the first argument in populate method.
+const data = await ConnectionRequest.find({
+toUserId: user.\_id,
+status: "interested",
+}).populate('fromUserId',["firstName","lastName"]);
+
+### Doubt
+
+if a and b both have sent req to c, and hile a is logged in, b intercepts a post req to see req sent, then b can get data of a , if b has user id of a
