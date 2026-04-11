@@ -104,6 +104,8 @@ toUserId: user.\_id,
 status: "interested",
 }).populate('fromUserId',["firstName","lastName"]);
 
+["firstName","lastName"] here we mention only those attributes what we need, no all ,else all data like email,pass,etc would come, which isnt required. so we mention the fields we need, it avoids over fetching of data
+
 .save() mehtod automatically runs all validators defined in schema or somewhere else when data is being added or updated.
 but the encrypted password is not running because the save() is checking the encrypted password strength and not the original plain text, so we need to check passowrd strength before data ios saved in db.
 

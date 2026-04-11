@@ -5,6 +5,8 @@ const { userAuth } = require("../middlewares/auth");
 
 const requestRouter = express.Router();
 
+//Since we are using left and right swipe feature, so there are 2 api calls
+// and any other person who comes to the feed, is either accepted or ignored.
 requestRouter.post(
   "/request/send/:status/:toUserId",
   userAuth,

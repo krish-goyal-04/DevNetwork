@@ -10,15 +10,40 @@ userRouter.get("/user/requests/received", userAuth, async (req, res) => {
     const user = req.user;
 
     //find user data in connectionRequest db and filter out interested status requested sent to current user by other users
+    //i.e it gives data of users who have sent connection request to the loggedIn user
     const data = await ConnectionRequest.find({
       toUserId: user._id,
       status: "interested",
-    }).populate("fromUserId", ["firstName", "lastName"]);
+    }).populate("fromUserId", ["firstName", "lastName"]); //Populate method would allow us to avoid overfetching of data
+    //here we can also pass data in a string separated by comma ex: "firstName lastName skills age"
     if (data.length === 0) res.json({ message: "No requests received" });
 
     res.json({ data, message: "Requests fetcheed successfully!!" });
   } catch (err) {
     res.send("ERROR :" + err.message);
+  }
+});
+
+//API which gives users all their connections, to whom they sent a req, or form whom the received the req
+// and in both cases the satus is accepted
+
+userRouter.get("user/connections", userAuth, async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user) res.json("User not found, Please try again!!");
+
+    const connectionsData = await ConnectionRequest.find({
+      $or: [{ toUserId: user._id }, { fromUserId: user._id }],
+      status: "accepted",
+    }).populate("fromUserId", ["firstName", "lastName"]);
+
+    if (connectionsData.length === 0)
+      res.json({ message: "No connections found !!" });
+
+    res.json({ message: "Connections fetched successfully!", connectionsData });
+  } catch (err) {
+    res.send("ERROR : " + err.message);
   }
 });
 
