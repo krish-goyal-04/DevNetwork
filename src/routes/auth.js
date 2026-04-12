@@ -50,7 +50,7 @@ authRouter.post("/login", validateLoginUSer, async (req, res) => {
 
     const token = await findUser.getJWT();
     //here we put finduser, as finduser here is the instance of the userSchema
-    console.log(token);
+    //console.log(token);
 
     //Once the token in built, we send this token as a cookie
 
@@ -66,9 +66,9 @@ authRouter.post("/login", validateLoginUSer, async (req, res) => {
 authRouter.post("/logout", userAuth, async (req, res) => {
   try {
     res.clearCookie("token");
-    res.send("Cookie deleted");
+    return res.status(200).json({ message: "Logged out successfully !!" });
   } catch (err) {
-    res.send("ERROR : " + err.message);
+    return res.status(500).json({ message: err.message });
   }
 });
 

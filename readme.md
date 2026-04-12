@@ -112,7 +112,7 @@ but the encrypted password is not running because the save() is checking the enc
 Inside try catch block, when we perfrom multiple checks, if there's an error and we dont put a return along with response, we get the error as "Cannot set headers after they are sent to the client"
 because, even after there's an error, the appropritate responseis sent still, after that the code continues to run, so return is required.
 
-### bug
+### bug - Fixed
 
 🔥 Real Interview Insight
 
@@ -122,7 +122,7 @@ If you say this in interview:
 
 “I fixed ERR_HTTP_HEADERS_SENT by converting validation into middleware with next()”
 
-### bug
+### bug --Fixed
 
 even after performing multiple checks, same user is getting created in db.
 in response we get, user exists, but user with same email gets created each time signup with same credentials is done, but in response we get user already exists, also due to this reason facing issue in login.
