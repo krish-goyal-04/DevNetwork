@@ -109,6 +109,36 @@ status: "interested",
 .save() mehtod automatically runs all validators defined in schema or somewhere else when data is being added or updated.
 but the encrypted password is not running because the save() is checking the encrypted password strength and not the original plain text, so we need to check passowrd strength before data ios saved in db.
 
+Inside try catch block, when we perfrom multiple checks, if there's an error and we dont put a return along with response, we get the error as "Cannot set headers after they are sent to the client"
+because, even after there's an error, the appropritate responseis sent still, after that the code continues to run, so return is required.
+
+### bug
+
+🔥 Real Interview Insight
+
+What you just hit is one of the most common backend bugs.
+
+If you say this in interview:
+
+“I fixed ERR_HTTP_HEADERS_SENT by converting validation into middleware with next()”
+
+### bug
+
+even after performing multiple checks, same user is getting created in db.
+in response we get, user exists, but user with same email gets created each time signup with same credentials is done, but in response we get user already exists, also due to this reason facing issue in login.
+
+mongodb throws code 11000 for duplicate enteries, in catch block mention them specifically
+
+Initially:
+Index NOT created yet ❌
+exists() check failed due to race condition(when 2 users check for same user, both get null and both create, but multi user i havent implemented/it hasnt been tested yet)
+Duplicate users got inserted
+Later (automatically):
+MongoDB finished creating the unique index
+Now duplicates are blocked at DB level
+
+So this error existed because i set unique:true was set after the db was created and some collections were added
+
 ### Doubt
 
 if a and b both have sent req to c, and hile a is logged in, b intercepts a post req to see req sent, then b can get data of a , if b has user id of a

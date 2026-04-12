@@ -7,10 +7,10 @@ const { User } = require("../models/user");
 const authRouter = express.Router();
 
 //POST api to create a new user
-authRouter.post("/signup", async (req, res) => {
+authRouter.post("/signup", validateSignupUser, async (req, res) => {
   try {
     //validation (Putting these validations on seperate function to keep code clean)
-    await validateSignupUser(req, res);
+    //await validateSignupUser(req, res); -- this wont stop execution, so we are using this as middleware
 
     const { firstName, lastName, emailId, password, gender } = req.body;
 
@@ -26,23 +26,27 @@ authRouter.post("/signup", async (req, res) => {
       password: encryptedPassword,
     });
     await newUser.save();
-    res.send("User Successfully added!");
+    return res.status(200).json({ message: "User Successfully added!" });
   } catch (err) {
-    res.status(400).send(err.message);
+    if (err.code === 11000)
+      return res.status(409).json({ message: "User already exists !!" });
+    return res.status(500).send(err.message);
   }
 });
 
 //POST api fo login
-authRouter.post("/login", async (req, res) => {
+authRouter.post("/login", validateLoginUSer, async (req, res) => {
   try {
     //Validating email
-    await validateLoginUSer(req, res);
+    //await validateLoginUSer(req, res);
     const { emailId, password } = req.body;
     const findUser = await User.findOne({ emailId: emailId });
-    if (!findUser) throw new Error("Invalid credentials");
+    if (!findUser)
+      return res.status(400).json({ message: "Invalid Credentials !!" });
 
     const checkPassword = await findUser.validatePassword(password);
-    if (!checkPassword) throw new Error("Invalid credentials");
+    if (!checkPassword)
+      return res.status(400).json({ message: "Invalid Credentials !!" });
 
     const token = await findUser.getJWT();
     //here we put finduser, as finduser here is the instance of the userSchema
@@ -51,11 +55,11 @@ authRouter.post("/login", async (req, res) => {
     //Once the token in built, we send this token as a cookie
 
     res.cookie("token", token);
-    res.send("Logged in Successfully!!");
+    res.status(200).json({ message: "Logged in Successfully!!" });
   } catch (err) {
     res
       .status(400)
-      .send("Unable to login, please try again /n" + "ERROR :" + err.message);
+      .json({ message: "Unable to login, please try again /n" + err.message });
   }
 });
 

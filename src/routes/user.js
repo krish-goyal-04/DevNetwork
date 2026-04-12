@@ -27,6 +27,7 @@ userRouter.get("/user/requests/received", userAuth, async (req, res) => {
 //API which gives users all their connections, to whom they sent a req, or form whom the received the req
 // and in both cases the satus is accepted
 
+//It has some bug, check it first
 userRouter.get("user/connections", userAuth, async (req, res) => {
   try {
     const user = req.user;

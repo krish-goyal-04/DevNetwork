@@ -158,8 +158,9 @@ userSchema.methods.getJWT = async function () {
 userSchema.methods.validatePassword = async function (passwordInputByUser) {
   const user = this;
   const paswordHash = user.password;
-  //once password is edncrypted and stored in db, we can never decrypt it.
-  //bcrypt library provides a compare method, where we put the user entered password along with the hashed stored password, which then tells us wether the password is correct or not.
+  //once password is encrypted and stored in db, we can never decrypt it.
+  //bcrypt library provides a compare method, where we put the user
+  // entered password along with the hashed stored password, which then tells us wether the password is correct or not.
   const validate = await bcrypt.compare(passwordInputByUser, paswordHash);
 
   return validate;
