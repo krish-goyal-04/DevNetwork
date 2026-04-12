@@ -54,7 +54,9 @@ authRouter.post("/login", validateLoginUSer, async (req, res) => {
 
     //Once the token in built, we send this token as a cookie
 
-    res.cookie("token", token);
+    res.cookie("token", token, {
+      httpOnly: true,
+    });
     res.status(200).json({ message: "Logged in Successfully!!" });
   } catch (err) {
     res
@@ -65,7 +67,9 @@ authRouter.post("/login", validateLoginUSer, async (req, res) => {
 
 authRouter.post("/logout", userAuth, async (req, res) => {
   try {
-    res.clearCookie("token");
+    res.clearCookie("token", {
+      httpOnly: true,
+    });
     return res.status(200).json({ message: "Logged out successfully !!" });
   } catch (err) {
     return res.status(500).json({ message: err.message });

