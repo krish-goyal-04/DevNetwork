@@ -2,7 +2,7 @@
 
 ## BACKEND
 
-nodemon start - if this is given we dont need to stop and restart the server, after any changes in code and as soon as saved, it does that itself
+npm start - (uses nodemon) if this is given we dont need to stop and restart the server, after any changes in code and as soon as saved, it does that itself
 
 node src/app.js - in this command we have to do it manually
 
@@ -213,6 +213,19 @@ httpOnly does NOT protect against:
 
 CSRF attacks (need sameSite)
 Man-in-the-middle (need secure)
+
+### DTO (Data Transfer Object) pattern
+
+sanizeData is called DTO.It:
+Control what data leaves backend
+Hide internal fields
+Improve security
+
+### password change improvement -future
+
+“Password change APIs must always verify the current password to prevent unauthorized account takeover.”
+
+you should also ask user to enter their old password, when they want to changeit but in that case, password reset and forgot password wont work in same api
 
 ### Doubt
 

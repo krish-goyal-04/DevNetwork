@@ -43,7 +43,7 @@ const validateLoginUSer = async (req, res, next) => {
   }
 };
 
-const validateProfileEditData = async (req, res) => {
+const validateProfileEditData = async (req, res, next) => {
   //We cant allow the user to update some sensitive profile related information like email(once created, it should stay always),user id,etc.
   //So we create a Allowed updates string array to only allow those fields to be updated which doesnot affect the account relevance.
   //then we check out(using every()) all those unwanted/unsecured(in term of user account management) update requests(userid,email id,etc) from request body. If even any one exists, the request will fail.
@@ -68,6 +68,7 @@ const validateProfileEditData = async (req, res) => {
 
     if (!isUpdateAllowed)
       return res.status(400).json({ message: "Invalid update request !!" });
+    next();
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
