@@ -1,8 +1,9 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const { ConnectionRequest } = require("../models/connectionRequest");
 const { User } = require("../models/user");
 const { userAuth } = require("../middlewares/auth");
-
+const { sanitizedConnectionData } = require("../utils/sanitizeData");
 const requestRouter = express.Router();
 
 //Since we are using left and right swipe feature, so there are 2 api calls
@@ -13,20 +14,32 @@ requestRouter.post(
   async (req, res) => {
     try {
       const status = req.params.status;
-      const toUserId = req.params.toUserId;
+      const toUserId = req.params.toUserId; //This is a string
       const loggedInUser = req.user;
-      const loggedInUserId = loggedInUser._id;
+      const loggedInUserId = loggedInUser._id; //This is an object Id
 
-      if (!status || !toUserId) throw new Error("Invalid status or user id!");
+      if (!status || !toUserId)
+        return res.status(400).json({ message: "Invalid status or user id!" });
 
-      //Check for allowed request i.e, interested or ignoreed
+      if (!mongoose.Types.ObjectId.isValid(toUserId)) {
+        return res.status(400).json({ message: "Invalid requested user ID!" });
+      }
+      //Check for allowed request i.e, interested or ignored
       const allowedUpdates = ["interested", "ignored"];
       if (!allowedUpdates.includes(status))
-        throw new Error("Invalid status request!");
+        return res.status(400).json({ message: "Invalid status request!" });
 
+      //throw error if user sends req to self
+      if (loggedInUserId.toString() === toUserId)
+        return res
+          .status(400)
+          .json({ message: "Can't send request to self !!!" });
       //Check if requested user exists or not in User schema
       const isUserAvailable = await User.findById(toUserId);
-      if (!isUserAvailable) throw new Error("Requested user doesnot exist");
+      if (!isUserAvailable)
+        return res
+          .status(400)
+          .json({ message: "Requested user doesnot exist" });
 
       //Check if sender has already sent a request to receiver or vice-versa
       const doesReqExists = await ConnectionRequest.findOne({
@@ -35,7 +48,8 @@ requestRouter.post(
           { toUserId: toUserId, fromUserId: loggedInUserId },
         ],
       });
-      if (doesReqExists) throw new Error("Request already exists!");
+      if (doesReqExists)
+        return res.status(409).json({ message: "Request already exists!" });
 
       const newRequest = new ConnectionRequest({
         toUserId: toUserId,
@@ -44,9 +58,13 @@ requestRouter.post(
       });
       await newRequest.save();
 
-      res.json({ message: "Request Successfull!!!", data: newRequest });
+      const safeData = sanitizedConnectionData(newRequest);
+
+      return res
+        .status(201)
+        .json({ message: "Request Successfull!!!", data: safeData });
     } catch (err) {
-      res.send("ERROR : " + err.message);
+      return res.status(500).json({ message: err.message });
     }
   },
 );

@@ -12,4 +12,15 @@ const sanitizedUserData = (user) => {
   };
 };
 
-module.exports = { sanitizedUserData };
+const sanitizedConnectionData = (newReq) => {
+  if (!newReq) return null;
+  const { _id, toUserId, fromUserId, status } = newReq;
+  return {
+    _id,
+    toUserId,
+    fromUserId,
+    status,
+  };
+};
+
+module.exports = { sanitizedUserData, sanitizedConnectionData };
