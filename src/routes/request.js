@@ -29,17 +29,12 @@ requestRouter.post(
       if (!allowedUpdates.includes(status))
         return res.status(400).json({ message: "Invalid status request!" });
 
-      //throw error if user sends req to self
-      if (loggedInUserId.toString() === toUserId)
-        return res
-          .status(400)
-          .json({ message: "Can't send request to self !!!" });
       //Check if requested user exists or not in User schema
       const isUserAvailable = await User.findById(toUserId);
       if (!isUserAvailable)
         return res
           .status(400)
-          .json({ message: "Requested user doesnot exist" });
+          .json({ message: "Requested user does not exist" });
 
       //Check if sender has already sent a request to receiver or vice-versa
       const doesReqExists = await ConnectionRequest.findOne({

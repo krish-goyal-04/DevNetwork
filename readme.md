@@ -227,6 +227,43 @@ Improve security
 
 you should also ask user to enter their old password, when they want to changeit but in that case, password reset and forgot password wont work in same api
 
+### race condition in connection Schema
+
+currently/when we are not putting any index or compoubnd index in connectionSchema, and checking in api wether a request exists between 2 users.
+it works when there is on;y 1 user,
+ERROR/RACE Condition : When 2 users simultaneously call this api for same userid and senderid, then they wont find any req, and will create 2 same requests, this breaks the db, as 2 duplicate connection reqs are formed.
+to handle this condition we should create a compound index on fromuserid and toUserid, so from A to B, only 1 status and req exists, but still B can send same req to A, for that we can check it through AP which we are implementing.
+the check in db should also be present for aded security.
+
+# compound indexes are direction sensitive
+
+App-level vs DB-level validation
+
+You did:
+
+findOne(...)
+
+👉 But this is NOT enough
+
+💥 Race Condition Problem
+
+Imagine:
+
+Request 1 → checks DB → no record
+Request 2 → checks DB → no record
+
+👉 Both insert → duplicate ❌
+
+✅ Real Solution (DB-level)
+connectionRequestSchema.index(
+{ fromUserId: 1, toUserId: 1 },
+{ unique: true }
+);
+
+👉 MongoDB ensures:
+
+Only ONE request allowed
+
 ### Doubt
 
 if a and b both have sent req to c, and hile a is logged in, b intercepts a post req to see req sent, then b can get data of a , if b has user id of a
