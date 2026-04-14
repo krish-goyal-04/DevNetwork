@@ -64,6 +64,7 @@ requestRouter.post(
   },
 );
 
+//using this api, user can accept/reject a req which has came to the loggedin user and the status is interested
 requestRouter.post(
   "/request/review/:status/:requestId",
   userAuth,
@@ -75,12 +76,17 @@ requestRouter.post(
 
       //check if status and request ids are present
       if (!status || !requestId)
-        throw new Error("Invalid status or request id!");
+        return res
+          .status(400)
+          .json({ message: "Invalid status or request id!" });
 
-      //Check only allowed actins, accepted or rejected
+      if (!mongoose.Types.ObjectId.isValid(requestId)) {
+        return res.status(400).json({ message: "Invalid requested ID!" });
+      }
+      //Check only allowed actions, accepted or rejected
       const allowedUpdates = ["accepted", "rejected"];
       if (!allowedUpdates.includes(status))
-        throw new Error("Invalid status request!!");
+        return res.status(400).json({ message: "Invalid status request!!" });
 
       const connReq = await ConnectionRequest.findOne({
         _id: requestId,
@@ -88,13 +94,18 @@ requestRouter.post(
         status: "interested",
       });
 
-      if (!connReq) throw new Error("Request cant be processed!!");
+      if (!connReq)
+        return res
+          .status(404)
+          .json({ message: "Request not found or already processed!!" });
       connReq.status = status;
       await connReq.save();
 
-      res.json({ message: `Request ${status} successfully!!!` });
+      return res
+        .status(200)
+        .json({ message: `Request ${status} successfully!!!` });
     } catch (err) {
-      res.send("ERROR : " + err.message);
+      return res.status(500).json({ message: err.message });
     }
   },
 );
