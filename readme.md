@@ -393,6 +393,62 @@ when a user has rejected someones req, then there should be an option to send a 
 
 “I fetch incoming connection requests by querying the ConnectionRequest collection filtered on toUserId and status, and populate sender details to avoid additional queries.”
 
+###bug in /user/connections - api which fetches all connections (accepted)
+in that api, if we write this logic
+const connectionsData = await ConnectionRequest.find({
+$or: [{ toUserId: user._id }, { fromUserId: user._id }],
+status: "accepted",
+}).populate("fromUserId", ["firstName", "lastName"]);
+to check wether A has sent a req to b and the req is accepted by b, if we put fromUser and touserId same as user.\_id, then A is connection of b, so both of them should display their connections when api is called indivisually, but when we populate the data of sender, and the sender is itself loggedd in here suppose A(acc to ex given above), then we will populate the data of sender (here A) itself
+
+    # Solution ---- “After populating user references, I extract the connected user by comparing IDs and returning the opposite node in the relationship.”
+
+📌 Bug in /user/connections API
+
+When fetching connections using:
+
+ConnectionRequest.find({
+$or: [{ toUserId: user._id }, { fromUserId: user._id }],
+status: "accepted",
+}).populate("fromUserId")
+❌ Problem
+
+If only fromUserId is populated:
+
+When the logged-in user is the sender,
+the populated data returns the user itself, not the connection.
+
+Example:
+
+A → B (accepted)
+If A is logged in:
+fromUserId = A → populated
+API returns A instead of B ❌
+🧠 Root Cause
+Connection is stored as a directed edge
+But we need to return it as an undirected relationship
+✅ Solution
+
+Populate both users and return the other user:
+
+.populate("fromUserId toUserId")
+
+Then:
+
+const safeData = connectionsData.map((row) => {
+if (row.fromUserId.\_id.toString() === user.\_id.toString()) {
+return row.toUserId;
+}
+return row.fromUserId;
+});
+🎯 Key Insight
+
+“After populating user references, extract the connected user by comparing IDs and returning the opposite node in the relationship.”
+
+🔥 One-line Summary
+
+Store connections as edges, return them as nodes.
+
 ### Doubt
 
 if a and b both have sent req to c, and hile a is logged in, b intercepts a post req to see req sent, then b can get data of a , if b has user id of a

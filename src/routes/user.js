@@ -34,24 +34,47 @@ userRouter.get("/user/requests/received", userAuth, async (req, res) => {
 //API which gives users all their connections, to whom they sent a req, or form whom the received the req
 // and in both cases the satus is accepted
 
-//It has some bug, check it first
-userRouter.get("user/connections", userAuth, async (req, res) => {
+userRouter.get("/user/connections", userAuth, async (req, res) => {
   try {
     const user = req.user;
-
-    if (!user) res.json("User not found, Please try again!!");
+    const loggedInUserId = user._id;
+    if (!user)
+      return res
+        .status(400)
+        .json({ message: "User not found, Please try again!!" });
 
     const connectionsData = await ConnectionRequest.find({
       $or: [{ toUserId: user._id }, { fromUserId: user._id }],
       status: "accepted",
-    }).populate("fromUserId", ["firstName", "lastName"]);
+    }).populate("fromUserId toUserId", ["firstName", "lastName"]);
+    console.log(connectionsData);
+    //we should not return connectionsData, as it is raw data
+    //it will contain Because you are returning:
+    /* full connection document
+      request ID
+      both users
+      status
+      metadata
+      This is internal DB structure, not what frontend needs
+      
+      we should give only users who are connected with basic details not everything we wrote in query*/
 
     if (connectionsData.length === 0)
-      res.json({ message: "No connections found !!" });
+      return res
+        .status(200)
+        .json({ message: "No connections found !!", data: [] });
 
-    res.json({ message: "Connections fetched successfully!", connectionsData });
+    const safeData = connectionsData.map((row) => {
+      if (row.fromUserId._id.toString() === loggedInUserId.toString()) {
+        return row.toUserId;
+      }
+      return row.fromUserId;
+    });
+    return res
+      .status(200)
+      .json({ message: "Connections fetched successfully!", data: safeData });
   } catch (err) {
-    res.send("ERROR : " + err.message);
+    return res.status(500).json({ message: err.message });
   }
 });
 
