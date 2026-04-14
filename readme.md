@@ -389,6 +389,10 @@ You can say:
 
 when a user has rejected someones req, then there should be an option to send a req again by the sender but after some days like 1,2 or 7 days
 
+### users/requests/received
+
+“I fetch incoming connection requests by querying the ConnectionRequest collection filtered on toUserId and status, and populate sender details to avoid additional queries.”
+
 ### Doubt
 
 if a and b both have sent req to c, and hile a is logged in, b intercepts a post req to see req sent, then b can get data of a , if b has user id of a

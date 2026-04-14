@@ -14,13 +14,20 @@ userRouter.get("/user/requests/received", userAuth, async (req, res) => {
     const data = await ConnectionRequest.find({
       toUserId: user._id,
       status: "interested",
-    }).populate("fromUserId", ["firstName", "lastName"]); //Populate method would allow us to avoid overfetching of data
+    })
+      .populate("fromUserId", ["firstName", "lastName"])
+      .sort({ createdAt: -1 }); //Populate method would allow us to avoid overfetching of data
     //here we can also pass data in a string separated by comma ex: "firstName lastName skills age"
-    if (data.length === 0) res.json({ message: "No requests received" });
 
-    res.json({ data, message: "Requests fetcheed successfully!!" });
+    //sorting the response based on lastest to oldest (i.e., descending order)
+    if (data.length === 0)
+      return res.status(200).json({ message: "No requests received" });
+
+    return res
+      .status(200)
+      .json({ data, message: "Requests fetched successfully!!" });
   } catch (err) {
-    res.send("ERROR :" + err.message);
+    return res.status(500).json({ message: err.message });
   }
 });
 
