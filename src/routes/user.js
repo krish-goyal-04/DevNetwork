@@ -92,20 +92,35 @@ userRouter.get("/feed", userAuth, async (req, res) => {
     const user = req.user;
     const loggedInUserId = user._id;
 
+    //pagination
+
+    //handling cases of too less page to avoid errors or too high limit to avoid heavy load on db
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+
+    //const page = Math.max(1, parseInt(req.query.page) || 1);
+    //if page is npt given, 1 will be default and max(1,1) will be compared else max(1,gien page number), so if user enters page<0, it wont fail in skip
+
+    const limit = Math.min(10, Math.max(1, parseInt(req.query.limit) || 10));
+
+    //if max is not added in limit then if limit is given <10, code fails
+    let skip = (page - 1) * limit;
+
+    if (skip < 0) skip = 0;
+
     if (!loggedInUserId)
       return res.status(400).json({ message: "Logged in user not found!!!" });
 
     //Get all user ids from connections data where either sender or receiver is loggedinuser
     const connectionsData = await ConnectionRequest.find({
       $or: [{ fromUserId: loggedInUserId }, { toUserId: loggedInUserId }],
-    });
+    }).select("fromUserId toUserId");
 
     //creating a set to extract all unque user ids from coonectionsData, so that they dont appear again in feed
     const skipUserIds = new Set();
 
     connectionsData.forEach((con) => {
-      skipUserIds.add(con.fromUserId);
-      skipUserIds.add(con.toUserId);
+      skipUserIds.add(con.fromUserId.toString());
+      skipUserIds.add(con.toUserId.toString());
     });
 
     //display only new users who have never occured in the feed of user
@@ -114,7 +129,9 @@ userRouter.get("/feed", userAuth, async (req, res) => {
         { _id: { $nin: [...skipUserIds] } },
         { _id: { $ne: loggedInUserId } },
       ],
-    });
+    })
+      .skip(skip)
+      .limit(limit);
 
     if (feedData.length === 0)
       return res

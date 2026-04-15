@@ -449,6 +449,8 @@ return row.fromUserId;
 
 Store connections as edges, return them as nodes.
 
+# know about .select and .populate
+
 ### Doubt
 
 if a and b both have sent req to c, and hile a is logged in, b intercepts a post req to see req sent, then b can get data of a , if b has user id of a
