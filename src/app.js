@@ -25,30 +25,6 @@ app.use("/", profileRouter);
 app.use("/", requestRouter);
 app.use("/", userRouter);
 
-//API to get a unique user details usin email id
-app.get("/user", async (req, res) => {
-  try {
-    const userEmailId = req.body.emailId;
-    const userDetails = await User.findOne({ emailId: userEmailId });
-    console.log(userDetails);
-    userDetails
-      ? res.send(userDetails)
-      : res.send("User with this email doesnot exist");
-  } catch (err) {
-    res.status(400).send("User Not Found!");
-  }
-});
-
-//API to get all users,, Feed API
-app.get("/feed", async (req, res) => {
-  try {
-    const allUsers = await User.find();
-    allUsers ? res.send(allUsers) : res.status(404).send("No user found");
-  } catch (err) {
-    res.send("Error fetching all users!");
-  }
-});
-
 connectDB()
   .then(() => {
     console.log("Connected to the mongodb successfully");

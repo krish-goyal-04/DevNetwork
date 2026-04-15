@@ -1,8 +1,9 @@
 const express = require("express");
 const { userAuth } = require("../middlewares/auth");
 const { ConnectionRequest } = require("../models/connectionRequest");
-
+const { User } = require("../models/user");
 const userRouter = express.Router();
+const { sanitizedUserData } = require("../utils/sanitizeData");
 
 userRouter.get("/user/requests/received", userAuth, async (req, res) => {
   try {
@@ -78,4 +79,55 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
   }
 });
 
+userRouter.get("/feed", userAuth, async (req, res) => {
+  //If someone has accepted my req they shouldnt appear on my feed
+  /* i.e fromUserId:loggedInUser and status:accepted */
+  //if someomne rejected my req, they should also not appear on my feed
+  /* i.e fromUserId:loggedInUser and status:rejected */
+  //If i have sent a conn req, they shouldnot appear on my feed
+  /*fromuserId:loggedInUser status:interested */
+  //same for ignored as well
+  //I shouldnot get my card
+  try {
+    const user = req.user;
+    const loggedInUserId = user._id;
+
+    if (!loggedInUserId)
+      return res.status(400).json({ message: "Logged in user not found!!!" });
+
+    //Get all user ids from connections data where either sender or receiver is loggedinuser
+    const connectionsData = await ConnectionRequest.find({
+      $or: [{ fromUserId: loggedInUserId }, { toUserId: loggedInUserId }],
+    });
+
+    //creating a set to extract all unque user ids from coonectionsData, so that they dont appear again in feed
+    const skipUserIds = new Set();
+
+    connectionsData.forEach((con) => {
+      skipUserIds.add(con.fromUserId);
+      skipUserIds.add(con.toUserId);
+    });
+
+    //display only new users who have never occured in the feed of user
+    const feedData = await User.find({
+      $and: [
+        { _id: { $nin: [...skipUserIds] } },
+        { _id: { $ne: loggedInUserId } },
+      ],
+    });
+
+    if (feedData.length === 0)
+      return res
+        .status(200)
+        .json({ message: "Yoo, You are all caught up!!!", data: [] });
+
+    const safeData = feedData.map((d) => sanitizedUserData(d));
+
+    return res
+      .status(200)
+      .json({ message: "Data fetched successfully!!", data: safeData });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
 module.exports = userRouter;
