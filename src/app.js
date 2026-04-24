@@ -6,6 +6,7 @@ const cookie = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const { userAuth } = require("./middlewares/auth");
+const cors = require("cors");
 
 const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
@@ -16,6 +17,12 @@ const app = express();
 dotenv.config();
 app.use(express.json());
 app.use(cookie());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
 
 //NEVER TRUST USER ENTERED DATA, ALWAYS PERFORM MULTIPLE POSSIBLE CHECKS!!!!!!!!
 

@@ -3,7 +3,7 @@ const { userAuth } = require("../middlewares/auth");
 const { validateSignupUser, validateLoginUSer } = require("../utils/validate");
 const bcrypt = require("bcrypt");
 const { User } = require("../models/user");
-
+const { sanitizedUserData } = require("../utils/sanitizeData");
 const authRouter = express.Router();
 
 //POST api to create a new user
@@ -53,11 +53,13 @@ authRouter.post("/login", validateLoginUSer, async (req, res) => {
     //console.log(token);
 
     //Once the token in built, we send this token as a cookie
-
+    const sanitizedData = sanitizedUserData(findUser);
     res.cookie("token", token, {
       httpOnly: true,
     });
-    res.status(200).json({ message: "Logged in Successfully!!" });
+    res
+      .status(200)
+      .json({ message: "Logged in Successfully!!", data: sanitizedData });
   } catch (err) {
     res
       .status(400)
