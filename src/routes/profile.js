@@ -16,7 +16,7 @@ profileRouter.get("/profile", userAuth, async (req, res) => {
     const safeData = sanitizedUserData(user);
     return res
       .status(200)
-      .json({ safeData, message: "Profile fetched successfully !!" });
+      .json({ data: safeData, message: "Profile fetched successfully !!" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
