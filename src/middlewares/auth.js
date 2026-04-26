@@ -29,7 +29,6 @@ const userAuth = async (req, res, next) => {
     //Once we have received the id of user, we will check the database if the user exists
     const user = await User.findById(_id);
     if (!user) throw new Error("User not found!!");
-
     //Till here if no errors are found, this implies that the user is verified and his/her request can be processed furthur
     //to the requested HTTP method
     //we will assign the user to the HTTP method byy attaching it with th request

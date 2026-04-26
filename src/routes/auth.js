@@ -12,17 +12,37 @@ authRouter.post("/signup", validateSignupUser, async (req, res) => {
     //validation (Putting these validations on seperate function to keep code clean)
     //await validateSignupUser(req, res); -- this wont stop execution, so we are using this as middleware
 
-    const { firstName, lastName, emailId, password, gender } = req.body;
+    const {
+      age,
+      emailId,
+      firstName,
+      lastName,
+      skills,
+      state,
+      college,
+      gender,
+      city,
+      password,
+      photoUrl,
+      description,
+    } = req.body;
 
     //password encryption
     const encryptedPassword = await bcrypt.hash(password, 10);
 
     //Saving user to database
     const newUser = new User({
+      age,
+      emailId,
       firstName,
       lastName,
-      emailId,
+      skills,
+      state,
+      college,
       gender,
+      city,
+      photoUrl,
+      description,
       password: encryptedPassword,
     });
     await newUser.save();
