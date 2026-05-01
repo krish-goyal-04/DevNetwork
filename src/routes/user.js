@@ -16,7 +16,18 @@ userRouter.get("/user/requests/received", userAuth, async (req, res) => {
       toUserId: user._id,
       status: "interested",
     })
-      .populate("fromUserId", ["firstName", "lastName"])
+      .populate("fromUserId", [
+        "firstName",
+        "lastName",
+        "skills",
+        "age",
+        "gender",
+        "city",
+        "state",
+        "photoUrl",
+        "college",
+        "description",
+      ])
       .sort({ createdAt: -1 }); //Populate method would allow us to avoid overfetching of data
     //here we can also pass data in a string separated by comma ex: "firstName lastName skills age"
 
@@ -24,9 +35,10 @@ userRouter.get("/user/requests/received", userAuth, async (req, res) => {
     if (data.length === 0)
       return res.status(200).json({ message: "No requests received" });
 
+    const userData = data.map((d) => sanitizedUserData(d.fromUserId));
     return res
       .status(200)
-      .json({ data, message: "Requests fetched successfully!!" });
+      .json({ data: userData, message: "Requests fetched successfully!!" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -47,8 +59,20 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
     const connectionsData = await ConnectionRequest.find({
       $or: [{ toUserId: user._id }, { fromUserId: user._id }],
       status: "accepted",
-    }).populate("fromUserId toUserId", ["firstName", "lastName"]);
-    console.log(connectionsData);
+    }).populate("fromUserId toUserId", [
+      "college",
+      "skills",
+      "description",
+      "firstName",
+      "lastName",
+      "age",
+      "gender",
+      "skills",
+      "city",
+      "state",
+      "photoUrl",
+    ]);
+
     //we should not return connectionsData, as it is raw data
     //it will contain Because you are returning:
     /* full connection document
@@ -65,15 +89,19 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
         .status(200)
         .json({ message: "No connections found !!", data: [] });
 
-    const safeData = connectionsData.map((row) => {
+    const userData = connectionsData.map((row) => {
       if (row.fromUserId._id.toString() === loggedInUserId.toString()) {
         return row.toUserId;
       }
       return row.fromUserId;
     });
-    return res
-      .status(200)
-      .json({ message: "Connections fetched successfully!", data: safeData });
+
+    const sanitizedData = userData.map((d) => sanitizedUserData(d));
+    console.log(sanitizedData);
+    return res.status(200).json({
+      message: "Connections fetched successfully!",
+      data: sanitizedData,
+    });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
