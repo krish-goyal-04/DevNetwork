@@ -45,7 +45,13 @@ authRouter.post("/signup", validateSignupUser, async (req, res) => {
       description,
       password: encryptedPassword,
     });
-    await newUser.save();
+    const savedUser = await newUser.save();
+    const token = await savedUser.getJWT();
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Cookie expires in 7 days
+    });
     return res.status(200).json({ message: "User Successfully added!" });
   } catch (err) {
     if (err.code === 11000)
@@ -76,6 +82,7 @@ authRouter.post("/login", validateLoginUSer, async (req, res) => {
     const sanitizedData = sanitizedUserData(findUser);
     res.cookie("token", token, {
       httpOnly: true,
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Cookie expires in 7 days
     });
     res
       .status(200)
@@ -91,6 +98,7 @@ authRouter.post("/logout", userAuth, async (req, res) => {
   try {
     res.clearCookie("token", {
       httpOnly: true,
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Cookie expires in 7 days
     });
     return res.status(200).json({ message: "Logged out successfully !!" });
   } catch (err) {
