@@ -4,6 +4,7 @@ const { ConnectionRequest } = require("../models/connectionRequest");
 const { User } = require("../models/user");
 const userRouter = express.Router();
 const { sanitizedUserData } = require("../utils/sanitizeData");
+const { connection } = require("mongoose");
 
 userRouter.get("/user/requests/received", userAuth, async (req, res) => {
   try {
@@ -37,7 +38,10 @@ userRouter.get("/user/requests/received", userAuth, async (req, res) => {
 
     const userData = data.map((d) => ({
       ...sanitizedUserData(d.fromUserId),
-      reqId: d._id,
+      connectionId: d._id,
+      status: d.status,
+      connectedAt: d.updatedAt,
+      createdAt: d.createdAt,
     }));
     return res
       .status(200)
@@ -76,31 +80,36 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
       "photoUrl",
     ]);
 
-    //we should not return connectionsData, as it is raw data
-    //it will contain Because you are returning:
-    /* full connection document
-      request ID
-      both users
-      status
-      metadata
-      This is internal DB structure, not what frontend needs
-      
-      we should give only users who are connected with basic details not everything we wrote in query*/
-
     if (connectionsData.length === 0)
       return res
         .status(200)
         .json({ message: "No connections found !!", data: [] });
 
     const userData = connectionsData.map((row) => {
-      if (row.fromUserId._id.toString() === loggedInUserId.toString()) {
-        return row.toUserId;
-      }
-      return row.fromUserId;
+      const isSender =
+        row.fromUserId._id.toString() === loggedInUserId.toString();
+
+      const connectedUser = isSender ? row.toUserId : row.fromUserId;
+
+      return {
+        ...connectedUser.toObject(), // Convert Mongoose document to plain JavaScript object
+        connectionId: row._id,
+        connectedAt: row.updatedAt,
+        createdAt: row.createdAt,
+        status: row.status,
+      };
     });
 
-    const sanitizedData = userData.map((d) => sanitizedUserData(d));
-    console.log(sanitizedData);
+    const sanitizedData = userData.map((d) => {
+      return {
+        ...sanitizedUserData(d),
+        connectionId: d.connectionId,
+        connectedAt: d.connectedAt,
+        createdAt: d.createdAt,
+        status: d.status,
+      };
+    });
+
     return res.status(200).json({
       message: "Connections fetched successfully!",
       data: sanitizedData,

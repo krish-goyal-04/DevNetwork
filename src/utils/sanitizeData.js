@@ -1,3 +1,5 @@
+const { connect } = require("mongoose");
+
 const sanitizedUserData = (user) => {
   if (!user) return null;
 
@@ -33,12 +35,14 @@ const sanitizedUserData = (user) => {
 
 const sanitizedConnectionData = (newReq) => {
   if (!newReq) return null;
-  const { _id, toUserId, fromUserId, status } = newReq;
+  const { _id, toUserId, fromUserId, status, connectedAt, createdAt } = newReq;
   return {
     _id,
     toUserId,
     fromUserId,
     status,
+    connectedAt,
+    createdAt,
   };
 };
 
