@@ -3,8 +3,20 @@ const mongoose = require("mongoose");
 const { ConnectionRequest } = require("../models/connectionRequest");
 const { User } = require("../models/user");
 const { userAuth } = require("../middlewares/auth");
-const { sanitizedConnectionData } = require("../utils/sanitizeData");
+const {
+  sanitizedConnectionData,
+  sanitizedUserData,
+} = require("../utils/sanitizeData");
 const requestRouter = express.Router();
+
+const notifyUser = (req, userId, event, payload) => {
+  const io = req.app.get("io");
+  const connectedUsers = req.app.get("connectedUsers");
+  if (!io || !connectedUsers) return;
+  const socketId = connectedUsers.get(userId.toString());
+  if (!socketId) return;
+  io.to(socketId).emit(event, payload);
+};
 
 //Since we are using left and right swipe feature, so there are 2 api calls
 // and any other person who comes to the feed, is either accepted or ignored.
@@ -54,6 +66,12 @@ requestRouter.post(
       await newRequest.save();
 
       const safeData = sanitizedConnectionData(newRequest);
+      notifyUser(req, toUserId, "request:received", {
+        connectionId: newRequest._id,
+        status: newRequest.status,
+        fromUser: sanitizedUserData(loggedInUser),
+        createdAt: newRequest.createdAt,
+      });
 
       return res
         .status(201)
@@ -100,6 +118,12 @@ requestRouter.post(
           .json({ message: "Request not found or already processed!!" });
       connReq.status = status;
       await connReq.save();
+      notifyUser(req, connReq.fromUserId, "request:reviewed", {
+        connectionId: connReq._id,
+        status,
+        toUserId: connReq.toUserId,
+        toUser: sanitizedUserData(loggedInUser),
+      });
 
       return res
         .status(200)
