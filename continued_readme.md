@@ -171,3 +171,33 @@ app.use()
 is enough.
 
 So Express simplifies everything.
+
+Sender creates request:
+
+UI → POST /request/send/... (REST) → backend saves request in DB (request.js).
+Backend emits request:received to the target user’s socket (via io / connectedUsers in app.js).
+Frontend socket (opened in DevNetwork Frontend/src/components/Body.jsx) receives request:received, transforms payload to the UI shape and dispatches addRequests(...) into the requests slice (requestsSlice.js).
+Requests.jsx reads the slice and renders the new card immediately (no refresh).
+Reviewer accepts/rejects:
+
+Reviewer clicks → POST /request/review/... (REST) → backend updates DB and emits request:reviewed to the original sender.
+Reviewer UI dispatches removeRequest(connectionId) locally so their card disappears immediately.
+Sender’s socket receives request:reviewed (in Body.jsx), frontend dispatches handleRequestReview (or another action) to update/remove the request in the sender’s Redux state.
+Sender’s UI updates immediately (no refresh). Optionally show toast / update connections slice when accepted.
+Why it used to require a refresh
+
+Payload shape mismatch: socket payload nested fromUser but UI components expect fields at top level, so cards showed fallbacks like “unknown”. After flattening/transformation on receipt, the UI gets the expected fields.
+Missing sender-side handling: there was no handler to process request:reviewed events and update sender’s Redux, so the sender didn’t see acceptance/rejection until a REST fetch (refresh).
+Socket not connected / not authenticated: if the socket wasn’t open or the JWT cookie wasn’t sent, backend couldn’t deliver events — leading to no realtime updates.
+Quick checks to confirm realtime behavior
+
+Open two clients (different users), watch DevTools Console:
+On send: backend logs emit; target receives request:received event.
+On review: reviewer’s request disappears locally; sender receives request:reviewed event.
+Inspect Redux requests slice in React DevTools — it should change immediately on the socket events.
+Verify cookie/token sent on socket handshake (so io middleware authenticates the socket).
+Edge cases and notes
+
+Offline users don’t get socket events (you still rely on REST on next fetch). Consider persistent notifications if you need guaranteed delivery.
+Multi-tab: current connectedUsers stores one socket id per user; multiple tabs may overwrite. Use a set of socket IDs per user to support multi-tab.
+Optional: show a toast on request:reviewed and update feed/connections slices when accepted.

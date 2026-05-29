@@ -9,9 +9,12 @@ const {
 } = require("../utils/sanitizeData");
 const requestRouter = express.Router();
 
-const notifyUser = (req, userId, event, payload) => {
-  const io = req.app.get("io");
-  const connectedUsers = req.app.get("connectedUsers");
+// Emit a real-time socket event to a connected target user.
+// If the target user is not currently connected via WebSocket, this function quietly does nothing.
+// That means the notification arrives instantly only when the recipient is online.
+const notifyUser = async (req, userId, event, payload) => {
+  const io = await req.app.get("io");
+  const connectedUsers = await req.app.get("connectedUsers");
   if (!io || !connectedUsers) return;
   const socketId = connectedUsers.get(userId.toString());
   if (!socketId) return;
@@ -58,7 +61,7 @@ requestRouter.post(
       if (doesReqExists)
         return res.status(409).json({ message: "Request already exists!" });
 
-      const newRequest = new ConnectionRequest({
+      const newRequest = await new ConnectionRequest({
         toUserId: toUserId,
         fromUserId: loggedInUserId,
         status: status,
@@ -66,7 +69,7 @@ requestRouter.post(
       await newRequest.save();
 
       const safeData = sanitizedConnectionData(newRequest);
-      notifyUser(req, toUserId, "request:received", {
+      await notifyUser(req, toUserId, "request:received", {
         connectionId: newRequest._id,
         status: newRequest.status,
         fromUser: sanitizedUserData(loggedInUser),

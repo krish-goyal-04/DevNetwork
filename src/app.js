@@ -39,9 +39,13 @@ const io = new Server(server, {
 
 const connectedUsers = new Map();
 
-//app.set is used to store the io instance and the connectedUsers map in the Express app instance, which allows us to access them in our route handlers and middlewares. This way, we can emit events to specific users or broadcast messages to all connected clients from anywhere in our application by accessing these stored values through the app instance.
-//Without app.set(), we would have to manually import/pass io everywhere.
+// This map stores the currently connected socket id for each authenticated user.
+// It is used to deliver real-time events only to the recipient who is online.
+// Note: this simple Map stores one socket id per user. If the same user opens multiple tabs, the latest connection will overwrite the previous one.
+// For multi-tab support, use a Map<string, Set<string>> and emit to all socket ids for that user.
 
+// app.set is used to store the io instance and connectedUsers map in the Express app instance,
+// allowing route handlers to access them through req.app.get(...).
 app.set("io", io);
 app.set("connectedUsers", connectedUsers);
 
