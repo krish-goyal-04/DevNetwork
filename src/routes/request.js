@@ -69,12 +69,16 @@ requestRouter.post(
       await newRequest.save();
 
       const safeData = sanitizedConnectionData(newRequest);
-      await notifyUser(req, toUserId, "request:received", {
-        connectionId: newRequest._id,
-        status: newRequest.status,
-        fromUser: sanitizedUserData(loggedInUser),
-        createdAt: newRequest.createdAt,
-      });
+      // Only notify the recipient for meaningful requests ("interested").
+      // If the sender swipes "ignored", we persist the record but do not send a real-time notification.
+      if (status === "interested") {
+        await notifyUser(req, toUserId, "request:received", {
+          connectionId: newRequest._id,
+          status: newRequest.status,
+          fromUser: sanitizedUserData(loggedInUser),
+          createdAt: newRequest.createdAt,
+        });
+      }
 
       return res
         .status(201)
