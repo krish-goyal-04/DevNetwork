@@ -7,6 +7,7 @@ const {
   sanitizedConnectionData,
   sanitizedUserData,
 } = require("../utils/sanitizeData");
+const { getPersonalRoomName } = require("../utils/socketHelpers");
 const requestRouter = express.Router();
 
 // Emit a real-time socket event to a connected target user.
@@ -14,11 +15,9 @@ const requestRouter = express.Router();
 // That means the notification arrives instantly only when the recipient is online.
 const notifyUser = async (req, userId, event, payload) => {
   const io = await req.app.get("io");
-  const connectedUsers = await req.app.get("connectedUsers");
-  if (!io || !connectedUsers) return;
-  const socketId = connectedUsers.get(userId.toString());
-  if (!socketId) return;
-  io.to(socketId).emit(event, payload);
+  if (!io) return;
+  const userRoom = getPersonalRoomName(userId.toString());
+  io.to(userRoom).emit(event, payload);
 };
 
 //Since we are using left and right swipe feature, so there are 2 api calls

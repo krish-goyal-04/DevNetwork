@@ -201,3 +201,39 @@ Edge cases and notes
 Offline users don’t get socket events (you still rely on REST on next fetch). Consider persistent notifications if you need guaranteed delivery.
 Multi-tab: current connectedUsers stores one socket id per user; multiple tabs may overwrite. Use a set of socket IDs per user to support multi-tab.
 Optional: show a toast on request:reviewed and update feed/connections slices when accepted.
+
+Here’s a concise end-to-end explanation of how realtime notifications work and how the server notifyUser ties into the client socket in Body.jsx.
+
+How server-side notifyUser works
+
+Location: DevNetwork/src/routes/request.js (function notifyUser).
+Behavior: it reads the Socket.IO io instance and a connectedUsers map from the Express app, looks up the recipient’s socket id by userId, and calls io.to(socketId).emit(event, payload).
+Result: the server sends a targeted socket event only to the socket id returned by the map (so only the online recipient receives it).
+Where the socket id map comes from
+
+The app (in your socket setup file, e.g. app.js) accepts socket connections, authenticates the user (cookie/JWT), and stores a mapping connectedUsers.set(userId, socket.id). On disconnect it removes that mapping. That map is attached to req.app so notifyUser can access it.
+Typical trigger flow (request send → recipient notified)
+
+Client calls REST endpoint POST /request/send/:status/:toUserId.
+Server saves a ConnectionRequest in DB.
+Server calls notifyUser(req, toUserId, "request:received", payload) (only when status == "interested" after your patch).
+notifyUser finds recipient’s socket id and emits the event to that socket.
+How the frontend receives & uses it
+
+Location: DevNetwork Frontend/src/components/Body.jsx
+Body.jsx opens a Socket.IO client (io(baseURL, { withCredentials: true, transports: ['websocket'] })), listens for events like request:received and request:reviewed, then:
+transforms the payload to match Redux shape (e.g., flatten fromUser into a request object),
+dispatches Redux actions (addRequests, handleRequestReview),
+shows a toast notification via your ToastNotification helper.
+Why an “ignored” (skipped) request produced a notification previously
+
+The server originally emitted request:received for every saved request regardless of status. That caused recipients to get notified even when the sender had chosen ignored.
+You fixed this by only calling notifyUser when status === "interested", so skipped swipes are persisted but not emitted as real-time notifications.
+Quick troubleshooting checklist (if notifications aren’t showing)
+
+Verify the client socket is connected (browser console shows socket id).
+Confirm connectedUsers contains the recipient’s userId → socketId mapping on server.
+Ensure event names match exactly between server emit and client listener (request:received, request:reviewed).
+Check cookies/JWT used for socket auth are sent (withCredentials: true) so server can map the socket to a user.
+Inspect network WS frames (browser devtools → Network → WS) to see emitted events.
+Confirm payload shape matches what the frontend code expects before dispatching reducers.

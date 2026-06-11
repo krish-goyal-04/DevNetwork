@@ -8,11 +8,17 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const { userAuth } = require("./middlewares/auth");
 const cors = require("cors");
+const {
+  getPersonalRoomName,
+  getPrivateChatRoomName,
+  areUsersConnected,
+} = require("./utils/socketHelpers");
 
 const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/request");
 const userRouter = require("./routes/user");
+const chatRouter = require("./routes/chat");
 
 // http module is used to create a server and socket.io is used for real-time communication between the client and server. We are using socket.io to create a WebSocket connection between the client and server, which allows us to send and receive data in real-time without the need for the client to refresh the page. This is particularly useful for features like notifications, chat applications, or any functionality that requires instant updates.
 
@@ -82,29 +88,130 @@ app.use(
   }),
 );
 
-//NEVER TRUST USER ENTERED DATA, ALWAYS PERFORM MULTIPLE POSSIBLE CHECKS!!!!!!!!
+// NEVER TRUST USER ENTERED DATA, ALWAYS PERFORM MULTIPLE POSSIBLE CHECKS!!!!!!!!
 
-//any req that comes will match with the routes defined in authrouter,profilerouter,etc...if it matched,,it gets executed
+// Any request that comes will match with the routes defined in authRouter, profileRouter, requestRouter, userRouter.
 app.use("/", authRouter);
 app.use("/", profileRouter);
 app.use("/", requestRouter);
 app.use("/", userRouter);
+app.use("/", chatRouter);
 
-// Socket.IO connection handling. When a client connects to the server via WebSocket, this event is triggered. We can use this to set up listeners for specific events that the client might emit, such as "joinRoom" or "leaveRoom". This allows us to manage real-time interactions between clients, such as joining chat rooms or sending notifications.
-
+// Socket.IO connection handling for authenticated users.
+// Each logged-in socket joins a personal room so we can send notifications and chat events to all active tabs/devices.
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id, "userId:", socket.userId);
+
   if (socket.userId) {
-    connectedUsers.set(socket.userId.toString(), socket.id);
+    const userIdString = socket.userId.toString();
+    const userRoom = getPersonalRoomName(userIdString);
+
+    // Keep a set of socket ids per user to support multi-tab sessions.
+    // When a socket connects, we add it to the user's personal room and update the connectedUsers map to track all active sockets for that user. This allows us to send real-time notifications and messages to all of the user's active sessions, ensuring that they receive updates regardless of which tab or device they are using.
+    socket.join(userRoom);
+    const existingSockets = connectedUsers.get(userIdString) || new Set();
+    existingSockets.add(socket.id);
+    connectedUsers.set(userIdString, existingSockets);
+
+    // Event: request:received
+    // Triggered when ANOTHER user sends a connection request to the logged-in user.
+    // Payload: { connectionId, status, fromUser: {...}, createdAt }
+
+    socket.on("joinChat", async ({ participantId }, callback) => {
+      try {
+        if (!participantId) {
+          return callback?.({
+            status: "error",
+            message: "Participant id missing.",
+          });
+        }
+
+        const connected = await areUsersConnected(userIdString, participantId);
+        if (!connected) {
+          return callback?.({
+            status: "error",
+            message: "You are not connected with this user.",
+          });
+        }
+
+        const chatRoom = getPrivateChatRoomName(userIdString, participantId);
+        socket.join(chatRoom);
+        return callback?.({ status: "ok", room: chatRoom });
+      } catch (err) {
+        return callback?.({ status: "error", message: err.message });
+      }
+    });
+
+    socket.on("chat:send", async ({ toUserId, message }, callback) => {
+      try {
+        if (!toUserId || typeof message !== "string" || !message.trim()) {
+          return callback?.({
+            status: "error",
+            message: "Invalid chat payload.",
+          });
+        }
+
+        const connected = await areUsersConnected(userIdString, toUserId);
+        if (!connected) {
+          return callback?.({
+            status: "error",
+            message: "You are not connected with this user.",
+          });
+        }
+
+        const chatRoom = getPrivateChatRoomName(userIdString, toUserId);
+        const ChatMessage = require("./models/chatMessages");
+        const isRecipientOnline = connectedUsers.has(toUserId.toString());
+        const savedMessage = await new ChatMessage({
+          fromUserId: socket.userId,
+          toUserId,
+          message: message.trim(),
+          status: isRecipientOnline ? "delivered" : "sent",
+        }).save();
+
+        const payload = {
+          _id: savedMessage._id,
+          fromUserId: savedMessage.fromUserId.toString(),
+          toUserId: savedMessage.toUserId.toString(),
+          message: savedMessage.message,
+          status: savedMessage.status,
+          createdAt: savedMessage.createdAt,
+          updatedAt: savedMessage.updatedAt,
+          messageType: savedMessage.messageType,
+          fromSelf: savedMessage.fromUserId.toString() === userIdString,
+        };
+
+        io.to(chatRoom).emit("chat:message", payload);
+        io.to(getPersonalRoomName(toUserId)).emit("notification:message", {
+          fromUserId: userIdString,
+          toUserId,
+          snippet: payload.message.slice(0, 120),
+        });
+
+        return callback?.({ status: "ok" });
+      } catch (err) {
+        return callback?.({ status: "error", message: err.message });
+      }
+    });
   }
 
   socket.on("disconnect", () => {
     if (socket.userId) {
-      connectedUsers.delete(socket.userId.toString());
+      const userIdString = socket.userId.toString();
+      const existingSockets = connectedUsers.get(userIdString);
+      if (existingSockets) {
+        existingSockets.delete(socket.id);
+        if (existingSockets.size === 0) {
+          connectedUsers.delete(userIdString);
+        } else {
+          connectedUsers.set(userIdString, existingSockets);
+        }
+      }
     }
     console.log("A user disconnected:", socket.id);
   });
 });
+
 connectDB()
   .then(() => {
     console.log("Connected to the mongodb successfully");
