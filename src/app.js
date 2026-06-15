@@ -117,6 +117,8 @@ io.on("connection", (socket) => {
     // Triggered when ANOTHER user sends a connection request to the logged-in user.
     // Payload: { connectionId, status, fromUser: {...}, createdAt }
 
+    //callback is used to send a response back to the client that emitted the event. It allows the server to acknowledge the event and provide feedback to the client, such as success or error messages. In this case, we are using the callback to send a response indicating whether the user has successfully joined the chat room or if there was an error (e.g., missing participant ID or not being connected with the specified user). This helps improve the user experience by providing immediate feedback on their actions.
+
     socket.on("joinChat", async ({ participantId }, callback) => {
       try {
         if (!participantId) {
