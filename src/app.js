@@ -38,7 +38,7 @@ app.use(cookieParser());
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: process.env.CLIENT_URL,
     credentials: true,
   },
 });
@@ -217,8 +217,8 @@ io.on("connection", (socket) => {
 connectDB()
   .then(() => {
     console.log("Connected to the mongodb successfully");
-    server.listen(3000, () => {
-      console.log("App is running on port 3000...");
+    server.listen(process.env.PORT, () => {
+      console.log(`Server is running ...`);
     });
   })
   .catch((err) => {
