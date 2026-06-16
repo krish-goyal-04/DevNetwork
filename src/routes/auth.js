@@ -50,6 +50,8 @@ authRouter.post("/signup", validateSignupUser, async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
+      secure: true, // Set secure flag for HTTPS
+      sameSite: "none", // Set SameSite attribute to 'None' for cross-site cookies
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Cookie expires in 7 days
     });
     return res.status(200).json({ message: "User Successfully added!" });
@@ -83,6 +85,8 @@ authRouter.post("/login", validateLoginUSer, async (req, res) => {
     const sanitizedData = sanitizedUserData(findUser);
     res.cookie("token", token, {
       httpOnly: true,
+      secure: true, // Set secure flag for HTTPS
+      sameSite: "none", // Set SameSite attribute to 'None' for cross-site cookies
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Cookie expires in 7 days
     });
     res
