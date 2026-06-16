@@ -63,6 +63,7 @@ authRouter.post("/signup", validateSignupUser, async (req, res) => {
 //POST api fo login
 authRouter.post("/login", validateLoginUSer, async (req, res) => {
   try {
+    console.log(req.body);
     //Validating email
     //await validateLoginUSer(req, res);
     const { emailId, password } = req.body;
