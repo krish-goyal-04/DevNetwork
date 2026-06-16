@@ -4,9 +4,7 @@ const mongoose = require("mongoose");
 dotenv.config();
 
 const connectDB = async () => {
-  await mongoose.connect(
-    `mongodb+srv://krish:${process.env.mongodbPass}@learningmongo1.utwidrh.mongodb.net/devNetwork`,
-  );
+  await mongoose.connect(process.env.mongodbURL);
 };
 
 module.exports = { connectDB };
