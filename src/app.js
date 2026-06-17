@@ -14,6 +14,7 @@ const {
   areUsersConnected,
 } = require("./utils/socketHelpers");
 
+dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
@@ -36,9 +37,9 @@ const { Server } = require("socket.io");
 
 // We are creating an HTTP server using the built-in http module and passing our Express app to it. This allows us to use the same server for both our Express routes and our Socket.IO connections. By doing this, we can handle regular HTTP requests as well as real-time WebSocket connections on the same server instance.
 const server = http.createServer(app);
-dotenv.config();
+/*dotenv.config();
 app.use(express.json());
-app.use(cookieParser());
+app.use(cookieParser());*/
 // We are initializing a new instance of the Socket.IO server and attaching it to our HTTP server. This allows us to handle WebSocket connections and real-time communication between the client and server. The CORS configuration is set to allow requests from "http://localhost:5173" and to include credentials (like cookies) in the requests, which is important for authentication and maintaining user sessions.
 
 // The CORS configuration is set to allow requests from "http://localhost:5173" and to include credentials (like cookies) in the requests, which is important for authentication and maintaining user sessions.
