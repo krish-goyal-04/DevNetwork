@@ -16,11 +16,13 @@ const {
 
 dotenv.config();
 const app = express();
+
+const allwoedOrigins = process.env.CLIENT_URL.split(",");
 app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:5173", process.env.CLIENT_URL],
+    origin: allwoedOrigins,
     credentials: true,
   }),
 );
@@ -46,7 +48,7 @@ app.use(cookieParser());*/
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL,
+    origin: allwoedOrigins,
     credentials: true,
   },
 });

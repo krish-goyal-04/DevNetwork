@@ -1158,3 +1158,8 @@ after deploying backend, the cookies were sent but were not processed by backend
 secure: true, // Set secure flag for HTTPS
 sameSite: "none", // Set SameSite attribute to 'None' for cross-site cookies
 these configds were done
+
+### ISSUE:
+
+in allowedorigin in cors, i gave urls in [..,...,..] and in env it was comma separated which were interpreted as a sungle sring and were restricted by cors
+but in env of render(backend deployment) i gave it as comma separated urls, due to which i got errors, so in cord cretaed one alowedorigins and imported it form env file where also urls were comma separated.
