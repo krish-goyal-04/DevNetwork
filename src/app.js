@@ -14,6 +14,15 @@ const {
   areUsersConnected,
 } = require("./utils/socketHelpers");
 
+const app = express();
+app.use(express.json());
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: ["http://localhost:5173", process.env.CLIENT_URL],
+    credentials: true,
+  }),
+);
 const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/request");
@@ -24,8 +33,6 @@ const chatRouter = require("./routes/chat");
 
 const http = require("http");
 const { Server } = require("socket.io");
-
-const app = express();
 
 // We are creating an HTTP server using the built-in http module and passing our Express app to it. This allows us to use the same server for both our Express routes and our Socket.IO connections. By doing this, we can handle regular HTTP requests as well as real-time WebSocket connections on the same server instance.
 const server = http.createServer(app);
@@ -81,12 +88,12 @@ io.use((socket, next) => {
 //even after cors is set up in socket.io, we also need to set it up in express to allow cross-origin requests for our API endpoints. This ensures that our frontend application can communicate with our backend server without any CORS issues, allowing us to make API calls and receive responses successfully.
 // We are using the CORS middleware in our Express app to allow cross-origin requests from "http://localhost:5173". This is necessary because our frontend application (running on a different port) needs to communicate with our backend server, and without this configuration, the browser would block these requests due to CORS policy. By allowing credentials, we also enable the use of cookies for authentication and session management between the client and server.
 
-app.use(
+/*app.use(
   cors({
     origin: ["http://localhost:5173", process.env.CLIENT_URL],
     credentials: true,
   }),
-);
+);*/
 
 // NEVER TRUST USER ENTERED DATA, ALWAYS PERFORM MULTIPLE POSSIBLE CHECKS!!!!!!!!
 
