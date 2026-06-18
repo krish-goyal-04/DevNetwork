@@ -100,6 +100,7 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
       };
     });
 
+    const connectedUsers = req.app.get("connectedUsers");
     const sanitizedData = userData.map((d) => {
       return {
         ...sanitizedUserData(d),
@@ -107,6 +108,7 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
         connectedAt: d.connectedAt,
         createdAt: d.createdAt,
         status: d.status,
+        isOnline: connectedUsers ? connectedUsers.has(d._id.toString()) : false,
       };
     });
 

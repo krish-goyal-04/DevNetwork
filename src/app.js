@@ -23,6 +23,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: allwoedOrigins,
+    //origin: "http://localhost:5173",
     credentials: true,
   }),
 );
@@ -49,6 +50,7 @@ app.use(cookieParser());*/
 const io = new Server(server, {
   cors: {
     origin: allwoedOrigins,
+    //origin: "http://localhost:5173",
     credentials: true,
   },
 });
@@ -59,6 +61,16 @@ const connectedUsers = new Map();
 // It is used to deliver real-time events only to the recipient who is online.
 // Note: this simple Map stores one socket id per user. If the same user opens multiple tabs, the latest connection will overwrite the previous one.
 // For multi-tab support, use a Map<string, Set<string>> and emit to all socket ids for that user.
+
+// This function emits a "user:status-changed" event to all connected clients whenever a user's online status changes. It takes the userId and online status as parameters and sends the event with the updated status. This allows other users to see when a user comes online or goes offline in real-time.
+const emitUserStatus = (userId, online) => {
+  try {
+    const id = String(userId);
+    io.emit("user:status-changed", { userId: id, online });
+  } catch (e) {
+    console.error("emitUserStatus error:", e);
+  }
+};
 
 // app.set is used to store the io instance and connectedUsers map in the Express app instance,
 // allowing route handlers to access them through req.app.get(...).
@@ -85,18 +97,12 @@ io.use((socket, next) => {
     socket.userId = decoded._id;
     next();
   } catch (err) {
+    console.error("Socket auth error:", err && err.message);
     next(new Error("Authentication error"));
   }
 });
 //even after cors is set up in socket.io, we also need to set it up in express to allow cross-origin requests for our API endpoints. This ensures that our frontend application can communicate with our backend server without any CORS issues, allowing us to make API calls and receive responses successfully.
 // We are using the CORS middleware in our Express app to allow cross-origin requests from "http://localhost:5173". This is necessary because our frontend application (running on a different port) needs to communicate with our backend server, and without this configuration, the browser would block these requests due to CORS policy. By allowing credentials, we also enable the use of cookies for authentication and session management between the client and server.
-
-/*app.use(
-  cors({
-    origin: ["http://localhost:5173", process.env.CLIENT_URL],
-    credentials: true,
-  }),
-);*/
 
 // NEVER TRUST USER ENTERED DATA, ALWAYS PERFORM MULTIPLE POSSIBLE CHECKS!!!!!!!!
 
@@ -122,6 +128,9 @@ io.on("connection", (socket) => {
     const existingSockets = connectedUsers.get(userIdString) || new Set();
     existingSockets.add(socket.id);
     connectedUsers.set(userIdString, existingSockets);
+    if (existingSockets.size === 1) {
+      emitUserStatus(userIdString, true);
+    }
 
     // Event: request:received
     // Triggered when ANOTHER user sends a connection request to the logged-in user.
@@ -215,6 +224,7 @@ io.on("connection", (socket) => {
         existingSockets.delete(socket.id);
         if (existingSockets.size === 0) {
           connectedUsers.delete(userIdString);
+          emitUserStatus(userIdString, false);
         } else {
           connectedUsers.set(userIdString, existingSockets);
         }
